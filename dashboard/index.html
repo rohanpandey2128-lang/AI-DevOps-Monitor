@@ -1,6 +1,7 @@
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -61,9 +62,17 @@
             font-size: 32px;
         }
 
-        .error { color: #f87171; }
-        .warning { color: #facc15; }
-        .success { color: #4ade80; }
+        .error {
+            color: #f87171;
+        }
+
+        .warning {
+            color: #facc15;
+        }
+
+        .success {
+            color: #4ade80;
+        }
 
         .panel {
             background: #1e293b;
@@ -96,7 +105,8 @@
             cursor: not-allowed;
         }
 
-        input, select {
+        input,
+        select {
             width: 100%;
             padding: 13px;
             margin-bottom: 15px;
@@ -120,9 +130,17 @@
             line-height: 1.5;
         }
 
-        .log.ERROR { color: #f87171; }
-        .log.WARNING { color: #facc15; }
-        .log.INFO { color: #4ade80; }
+        .log.ERROR {
+            color: #f87171;
+        }
+
+        .log.WARNING {
+            color: #facc15;
+        }
+
+        .log.INFO {
+            color: #4ade80;
+        }
 
         pre {
             white-space: pre-wrap;
@@ -137,6 +155,48 @@
             line-height: 1.5;
         }
 
+        /* System Monitoring */
+
+        .metric-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+
+        .metric-value {
+            font-size: 32px;
+            margin-bottom: 12px;
+        }
+
+        .metric-bar {
+            width: 100%;
+            height: 10px;
+            background: #334155;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .metric-fill {
+            height: 100%;
+            width: 0%;
+            background: #4ade80;
+            border-radius: 10px;
+            transition: width 0.5s ease;
+        }
+
+        .metric-details {
+            color: #94a3b8;
+            margin-top: 12px;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .metric-status {
+            margin-top: 20px;
+            color: #4ade80;
+            font-size: 14px;
+        }
+
         @media(max-width: 800px) {
             .cards {
                 grid-template-columns: repeat(2, 1fr);
@@ -144,9 +204,12 @@
         }
 
         @media(max-width: 500px) {
-            body { padding: 15px; }
+            body {
+                padding: 15px;
+            }
 
-            .cards {
+            .cards,
+            .metric-grid {
                 grid-template-columns: 1fr;
             }
 
@@ -155,354 +218,543 @@
                 align-items: flex-start;
                 gap: 12px;
             }
+
+            header h1 {
+                font-size: 23px;
+            }
         }
     </style>
 </head>
 
 <body>
 
-<header>
-    <h1>AI DevOps Monitoring System</h1>
-    <div class="status" id="health">Checking API...</div>
-</header>
+    <header>
+        <h1>AI DevOps Monitoring System</h1>
+        <div class="status" id="health">Checking API...</div>
+    </header>
 
 
-<!-- Dashboard Statistics -->
-<div class="cards">
+    <!-- Dashboard Statistics -->
 
-    <div class="card">
-        <h3>Total Logs</h3>
-        <h2 id="total">0</h2>
+    <div class="cards">
+
+        <div class="card">
+            <h3>Total Logs</h3>
+            <h2 id="total">0</h2>
+        </div>
+
+        <div class="card">
+            <h3>Error Logs</h3>
+            <h2 class="error" id="errors">0</h2>
+        </div>
+
+        <div class="card">
+            <h3>Warning Logs</h3>
+            <h2 class="warning" id="warnings">0</h2>
+        </div>
+
+        <div class="card">
+            <h3>Info Logs</h3>
+            <h2 class="success" id="infos">0</h2>
+        </div>
+
     </div>
 
-    <div class="card">
-        <h3>Error Logs</h3>
-        <h2 class="error" id="errors">0</h2>
+
+    <!-- System Resource Monitoring -->
+
+    <div class="panel">
+
+        <h2>System Resource Monitoring</h2>
+
+        <div class="metric-grid">
+
+            <!-- CPU Monitoring -->
+
+            <div class="card">
+
+                <h3>CPU Usage</h3>
+
+                <div class="metric-value" id="cpuUsage">
+                    0%
+                </div>
+
+                <div class="metric-bar">
+                    <div class="metric-fill" id="cpuBar"></div>
+                </div>
+
+                <div class="metric-details" id="cpuStatus">
+                    Waiting for data...
+                </div>
+
+            </div>
+
+
+            <!-- RAM Monitoring -->
+
+            <div class="card">
+
+                <h3>RAM Usage</h3>
+
+                <div class="metric-value" id="ramUsage">
+                    0%
+                </div>
+
+                <div class="metric-bar">
+                    <div class="metric-fill" id="ramBar"></div>
+                </div>
+
+                <div class="metric-details" id="ramDetails">
+                    Waiting for data...
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="metric-status" id="metricsStatus">
+            Connecting to system monitor...
+        </div>
+
     </div>
 
-    <div class="card">
-        <h3>Warning Logs</h3>
-        <h2 class="warning" id="warnings">0</h2>
+
+    <!-- Generate Log Section -->
+
+    <div class="panel">
+
+        <h2>Generate Application Log</h2>
+
+        <label for="logLevel">Select Log Level</label>
+
+        <select id="logLevel">
+            <option value="ERROR" selected>ERROR</option>
+            <option value="WARNING">WARNING</option>
+            <option value="INFO">INFO</option>
+        </select>
+
+        <label for="logMessage">Log Message</label>
+
+        <input
+            type="text"
+            id="logMessage"
+            value="Database connection failed"
+            placeholder="Enter application log message"
+        >
+
+        <button id="generateButton" onclick="generateLog()">
+            Generate Log
+        </button>
+
+        <div class="message" id="logResult"></div>
+
     </div>
 
-    <div class="card">
-        <h3>Info Logs</h3>
-        <h2 class="success" id="infos">0</h2>
+
+    <!-- Recent Logs -->
+
+    <div class="panel">
+
+        <h2>Recent Application Logs</h2>
+
+        <button onclick="loadLogs()">Refresh Logs</button>
+
+        <div id="logs" style="margin-top: 20px;">
+            Loading logs...
+        </div>
+
     </div>
 
-</div>
 
+    <!-- AI Error Analysis -->
 
-<!-- Generate Log Section -->
-<div class="panel">
+    <div class="panel">
 
-    <h2>Generate Application Log</h2>
+        <h2>AI Error Analysis</h2>
 
-    <label for="logLevel">Select Log Level</label>
+        <input
+            type="text"
+            id="errorMessage"
+            value="Database connection failed"
+            placeholder="Enter error message"
+        >
 
-    <select id="logLevel">
-        <option value="ERROR" selected>ERROR</option>
-        <option value="WARNING">WARNING</option>
-        <option value="INFO">INFO</option>
-    </select>
+        <button id="analyzeButton" onclick="analyzeError()">
+            Analyze Error
+        </button>
 
-    <label for="logMessage">Log Message</label>
+        <pre id="analysis">AI analysis will appear here...</pre>
 
-    <input
-        type="text"
-        id="logMessage"
-        value="Database connection failed"
-        placeholder="Enter application log message"
-    >
-
-    <button id="generateButton" onclick="generateLog()">
-        Generate Log
-    </button>
-
-    <div class="message" id="logResult"></div>
-
-</div>
-
-
-<!-- Recent Logs -->
-<div class="panel">
-
-    <h2>Recent Application Logs</h2>
-
-    <button onclick="loadLogs()">Refresh Logs</button>
-
-    <div id="logs" style="margin-top: 20px;">
-        Loading logs...
     </div>
 
-</div>
+
+    <script>
+
+        // Same-origin API
+
+        const API = window.location.origin;
 
 
-<!-- AI Error Analysis -->
-<div class="panel">
+        // Check API Health
 
-    <h2>AI Error Analysis</h2>
+        async function checkHealth() {
 
-    <input
-        type="text"
-        id="errorMessage"
-        value="Database connection failed"
-        placeholder="Enter error message"
-    >
+            const health = document.getElementById("health");
 
-    <button id="analyzeButton" onclick="analyzeError()">
-        Analyze Error
-    </button>
+            try {
 
-    <pre id="analysis">AI analysis will appear here...</pre>
+                const response = await fetch(`${API}/health`);
 
-</div>
+                if (!response.ok) {
+                    throw new Error("API unavailable");
+                }
+
+                health.textContent = "● API Online";
+                health.style.color = "#4ade80";
+
+            } catch (error) {
+
+                health.textContent = "● API Offline";
+                health.style.color = "#f87171";
+
+            }
+        }
 
 
-<script>
+        // Load CPU and RAM Metrics
 
-    // Same-origin API: dashboard and backend use one server
-    const API = window.location.origin;
+        async function loadSystemMetrics() {
+
+            const status = document.getElementById("metricsStatus");
+
+            try {
+
+                const response = await fetch(`${API}/system/metrics`);
+
+                if (!response.ok) {
+                    throw new Error("Metrics API unavailable");
+                }
+
+                const data = await response.json();
+
+                if (data.status !== "success") {
+                    throw new Error("Invalid metrics response");
+                }
+
+                const cpu = Number(data.cpu_usage);
+                const ram = Number(data.ram_usage);
+
+                // Validate metric values
+
+                if (
+                    !Number.isFinite(cpu) ||
+                    !Number.isFinite(ram)
+                ) {
+                    throw new Error("Invalid metric values");
+                }
+
+                const safeCPU = Math.min(100, Math.max(0, cpu));
+                const safeRAM = Math.min(100, Math.max(0, ram));
+
+                // Display CPU
+
+                document.getElementById("cpuUsage").textContent =
+                    safeCPU + "%";
+
+                document.getElementById("cpuBar").style.width =
+                    safeCPU + "%";
+
+                document.getElementById("cpuBar").style.background =
+                    safeCPU >= 80 ? "#f87171" : "#4ade80";
+
+                document.getElementById("cpuStatus").textContent =
+                    safeCPU >= 80
+                        ? "Warning: High CPU Usage"
+                        : "Normal CPU Usage";
 
 
-    // Check API health
-    async function checkHealth() {
+                // Display RAM
 
-        const health = document.getElementById("health");
+                document.getElementById("ramUsage").textContent =
+                    safeRAM + "%";
 
-        try {
-            const response = await fetch(`${API}/health`);
+                document.getElementById("ramBar").style.width =
+                    safeRAM + "%";
 
-            if (!response.ok) {
-                throw new Error("API unavailable");
+                document.getElementById("ramBar").style.background =
+                    safeRAM >= 80 ? "#f87171" : "#4ade80";
+
+                document.getElementById("ramDetails").textContent =
+                    `Total: ${data.total_ram_gb} GB | Available: ${data.available_ram_gb} GB`;
+
+
+                // Overall monitoring status
+
+                if (safeCPU >= 80 || safeRAM >= 80) {
+
+                    status.textContent =
+                        "Warning: High system resource usage detected";
+
+                    status.style.color = "#f87171";
+
+                } else {
+
+                    status.textContent =
+                        "System metrics updated successfully";
+
+                    status.style.color = "#4ade80";
+
+                }
+
+            } catch (error) {
+
+                status.textContent =
+                    "Unable to load system metrics";
+
+                status.style.color = "#f87171";
+
+                console.error("Metrics error:", error);
+
+            }
+        }
+
+
+        // Generate Application Log
+
+        async function generateLog() {
+
+            const level = document.getElementById("logLevel").value;
+
+            const message = document.getElementById("logMessage").value.trim();
+
+            const result = document.getElementById("logResult");
+
+            const button = document.getElementById("generateButton");
+
+            if (!message) {
+
+                result.textContent = "Please enter a log message.";
+                result.style.color = "#f87171";
+
+                return;
             }
 
-            health.textContent = "● API Online";
-            health.style.color = "#4ade80";
+            button.disabled = true;
+            button.textContent = "Generating...";
 
-        } catch (error) {
+            result.textContent = "Saving log...";
 
-            health.textContent = "● API Offline";
-            health.style.color = "#f87171";
+            try {
 
+                const response = await fetch(`${API}/logs`, {
+
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+
+                    body: JSON.stringify({
+                        message: message,
+                        level: level
+                    })
+
+                });
+
+                const data = await response.json();
+
+                if (!response.ok || data.status !== "success") {
+                    throw new Error(data.message || "Failed to generate log");
+                }
+
+                result.textContent =
+                    `${level} log generated successfully!`;
+
+                result.style.color = "#4ade80";
+
+                await loadLogs();
+
+            } catch (error) {
+
+                result.textContent = "Error: " + error.message;
+                result.style.color = "#f87171";
+
+            } finally {
+
+                button.disabled = false;
+                button.textContent = "Generate Log";
+
+            }
         }
-    }
 
 
-    // Generate a new application log
-    async function generateLog() {
+        // Load Application Logs
 
-        const level = document.getElementById("logLevel").value;
+        async function loadLogs() {
 
-        const message = document.getElementById("logMessage").value.trim();
+            const container = document.getElementById("logs");
 
-        const result = document.getElementById("logResult");
+            try {
 
-        const button = document.getElementById("generateButton");
+                const response = await fetch(`${API}/logs`);
 
-        if (!message) {
-            result.textContent = "Please enter a log message.";
-            result.style.color = "#f87171";
-            return;
+                if (!response.ok) {
+                    throw new Error("Could not load logs");
+                }
+
+                const data = await response.json();
+
+                const logs = data.logs || [];
+
+                let errors = 0;
+                let warnings = 0;
+                let infos = 0;
+
+                logs.forEach(log => {
+
+                    if (log.includes("ERROR")) {
+                        errors++;
+                    }
+                    else if (log.includes("WARNING")) {
+                        warnings++;
+                    }
+                    else if (log.includes("INFO")) {
+                        infos++;
+                    }
+
+                });
+
+                document.getElementById("total").textContent =
+                    data.total_logs;
+
+                document.getElementById("errors").textContent =
+                    errors;
+
+                document.getElementById("warnings").textContent =
+                    warnings;
+
+                document.getElementById("infos").textContent =
+                    infos;
+
+
+                container.replaceChildren();
+
+                logs.slice().reverse().forEach(log => {
+
+                    const item = document.createElement("div");
+
+                    item.className = "log";
+
+                    if (log.includes("ERROR")) {
+                        item.classList.add("ERROR");
+                    }
+                    else if (log.includes("WARNING")) {
+                        item.classList.add("WARNING");
+                    }
+                    else {
+                        item.classList.add("INFO");
+                    }
+
+                    item.textContent = log.trim();
+
+                    container.appendChild(item);
+
+                });
+
+                if (logs.length === 0) {
+                    container.textContent = "No logs available.";
+                }
+
+            } catch (error) {
+
+                container.textContent =
+                    "Failed to load logs: " + error.message;
+
+            }
         }
 
-        button.disabled = true;
-        button.textContent = "Generating...";
 
-        result.textContent = "Saving log...";
+        // AI Error Analysis
 
-        try {
+        async function analyzeError() {
 
-            const response = await fetch(`${API}/logs`, {
+            const message =
+                document.getElementById("errorMessage").value.trim();
 
-                method: "POST",
+            const output = document.getElementById("analysis");
 
-                headers: {
-                    "Content-Type": "application/json"
-                },
+            const button = document.getElementById("analyzeButton");
 
-                body: JSON.stringify({
-                    message: message,
-                    level: level
-                })
+            if (!message) {
 
-            });
+                output.textContent = "Please enter an error message.";
 
-            const data = await response.json();
-
-            if (!response.ok || data.status !== "success") {
-                throw new Error(data.message || "Failed to generate log");
+                return;
             }
 
-            result.textContent = `${level} log generated successfully!`;
+            button.disabled = true;
+            button.textContent = "Analyzing...";
 
-            result.style.color = "#4ade80";
+            output.textContent = "Analyzing error with AI...";
 
-            // Update dashboard statistics and logs
-            await loadLogs();
+            try {
 
-        } catch (error) {
+                const response = await fetch(`${API}/analyze`, {
 
-            result.textContent = "Error: " + error.message;
-            result.style.color = "#f87171";
+                    method: "POST",
 
-        } finally {
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
 
-            button.disabled = false;
-            button.textContent = "Generate Log";
+                    body: JSON.stringify({
+                        message: message,
+                        level: "ERROR"
+                    })
 
-        }
-    }
+                });
 
+                const data = await response.json();
 
-    // Load application logs
-    async function loadLogs() {
-
-        const container = document.getElementById("logs");
-
-        try {
-
-            const response = await fetch(`${API}/logs`);
-
-            if (!response.ok) {
-                throw new Error("Could not load logs");
-            }
-
-            const data = await response.json();
-
-            const logs = data.logs || [];
-
-            let errors = 0;
-            let warnings = 0;
-            let infos = 0;
-
-            logs.forEach(log => {
-
-                if (log.includes("ERROR")) {
-                    errors++;
-                }
-                else if (log.includes("WARNING")) {
-                    warnings++;
-                }
-                else if (log.includes("INFO")) {
-                    infos++;
-                }
-
-            });
-
-            document.getElementById("total").textContent = data.total_logs;
-
-            document.getElementById("errors").textContent = errors;
-
-            document.getElementById("warnings").textContent = warnings;
-
-            document.getElementById("infos").textContent = infos;
-
-
-            container.replaceChildren();
-
-            logs.slice().reverse().forEach(log => {
-
-                const item = document.createElement("div");
-
-                item.className = "log";
-
-                if (log.includes("ERROR")) {
-                    item.classList.add("ERROR");
-                }
-                else if (log.includes("WARNING")) {
-                    item.classList.add("WARNING");
+                if (data.ai_analysis) {
+                    output.textContent = data.ai_analysis;
                 }
                 else {
-                    item.classList.add("INFO");
+                    output.textContent =
+                        data.message || "No analysis available.";
                 }
 
-                item.textContent = log.trim();
+            } catch (error) {
 
-                container.appendChild(item);
+                output.textContent =
+                    "Unable to connect to the API.";
 
-            });
+            } finally {
 
-            if (logs.length === 0) {
-                container.textContent = "No logs available.";
+                button.disabled = false;
+                button.textContent = "Analyze Error";
+
             }
-
-        } catch (error) {
-
-            container.textContent = "Failed to load logs: " + error.message;
-
-        }
-    }
-
-
-    // AI Error Analysis
-    async function analyzeError() {
-
-        const message = document.getElementById("errorMessage").value.trim();
-
-        const output = document.getElementById("analysis");
-
-        const button = document.getElementById("analyzeButton");
-
-        if (!message) {
-            output.textContent = "Please enter an error message.";
-            return;
         }
 
-        button.disabled = true;
-        button.textContent = "Analyzing...";
 
-        output.textContent = "Analyzing error with AI...";
+        // Initial Dashboard Loading
 
-        try {
-
-            const response = await fetch(`${API}/analyze`, {
-
-                method: "POST",
-
-                headers: {
-                    "Content-Type": "application/json"
-                },
-
-                body: JSON.stringify({
-                    message: message,
-                    level: "ERROR"
-                })
-
-            });
-
-            const data = await response.json();
-
-            if (data.ai_analysis) {
-                output.textContent = data.ai_analysis;
-            }
-            else {
-                output.textContent = data.message || "No analysis available.";
-            }
-
-        } catch (error) {
-
-            output.textContent = "Unable to connect to the API.";
-
-        } finally {
-
-            button.disabled = false;
-            button.textContent = "Analyze Error";
-
-        }
-    }
+        checkHealth();
+        loadLogs();
+        loadSystemMetrics();
 
 
-    // Initial dashboard loading
-    checkHealth();
-    loadLogs();
+        // Automatic Refresh
 
+        setInterval(checkHealth, 10000);
 
-    // Automatic refresh every 10 seconds
-    setInterval(checkHealth, 10000);
-    setInterval(loadLogs, 10000);
+        setInterval(loadLogs, 10000);
 
-</script>
+        setInterval(loadSystemMetrics, 5000);
+
+    </script>
 
 </body>
+
 </html>

@@ -6,6 +6,7 @@ from pydantic import BaseModel
 
 import logging
 import os
+import psutil
 
 from app.ai_analyzer import analyze_error
 
@@ -151,4 +152,19 @@ def analyze_log(data: LogRequest):
         "status": "success",
         "error": data.message,
         "ai_analysis": analysis
+    }
+# System CPU and RAM Monitoring API
+@app.get("/system/metrics")
+def system_metrics():
+
+    cpu_usage = psutil.cpu_percent(interval=1)
+
+    memory = psutil.virtual_memory()
+
+    return {
+        "status": "success",
+        "cpu_usage": cpu_usage,
+        "ram_usage": memory.percent,
+        "total_ram_gb": round(memory.total / (1024 ** 3), 2),
+        "available_ram_gb": round(memory.available / (1024 ** 3), 2)
     }
