@@ -20,6 +20,7 @@ logger = logging.getLogger("devops_monitor")
 logger.setLevel(logging.INFO)
 
 if not logger.handlers:
+
     file_handler = logging.FileHandler("logs/app.log")
 
     file_handler.setFormatter(
@@ -63,9 +64,14 @@ class LogRequest(BaseModel):
     level: str = "INFO"
 
 
+# Track previous system status
+last_system_status = "HEALTHY"
+
+
 # Home API
 @app.get("/")
 def home():
+
     return {
         "message": "AI DevOps Monitoring System is running!",
         "status": "success"
@@ -75,6 +81,7 @@ def home():
 # Health Check API
 @app.get("/health")
 def health_check():
+
     return {
         "status": "healthy",
         "service": "AI DevOps Monitor"
@@ -88,6 +95,7 @@ def create_log(data: LogRequest):
     level = data.level.upper()
 
     if level not in ["INFO", "WARNING", "ERROR"]:
+
         return {
             "status": "failed",
             "message": "Invalid log level"
@@ -114,6 +122,7 @@ def create_log(data: LogRequest):
 def get_logs():
 
     try:
+
         with open("logs/app.log", "r") as file:
             lines = file.readlines()
 
@@ -123,6 +132,7 @@ def get_logs():
         }
 
     except FileNotFoundError:
+
         return {
             "total_logs": 0,
             "logs": []
@@ -134,6 +144,7 @@ def get_logs():
 def analyze_log(data: LogRequest):
 
     if data.level.upper() != "ERROR":
+
         return {
             "status": "failed",
             "message": "AI analysis is available only for ERROR logs."
@@ -142,6 +153,7 @@ def analyze_log(data: LogRequest):
     analysis = analyze_error(data.message)
 
     if analysis.startswith("AI Analysis failed"):
+
         return {
             "status": "ai_unavailable",
             "error": data.message,
@@ -153,18 +165,84 @@ def analyze_log(data: LogRequest):
         "error": data.message,
         "ai_analysis": analysis
     }
-# System CPU and RAM Monitoring API
+
+
+# System CPU, RAM Monitoring and Alert API
 @app.get("/system/metrics")
 def system_metrics():
 
+    global last_system_status
+
+    # Collect CPU usage
     cpu_usage = psutil.cpu_percent(interval=1)
 
+    # Collect RAM information
     memory = psutil.virtual_memory()
 
+    ram_usage = memory.percent
+
+    # Detect system alerts
+    alerts = []
+
+    if cpu_usage >= 80:
+
+        alerts.append({
+            "type": "HIGH_CPU",
+            "message": f"High CPU usage detected: {cpu_usage}%"
+        })
+
+    if ram_usage >= 80:
+
+        alerts.append({
+            "type": "HIGH_RAM",
+            "message": f"High RAM usage detected: {ram_usage}%"
+        })
+
+    # Determine overall system status
+    if cpu_usage >= 80 and ram_usage >= 80:
+
+        system_status = "HIGH_CPU_AND_RAM"
+
+    elif cpu_usage >= 80:
+
+        system_status = "HIGH_CPU"
+
+    elif ram_usage >= 80:
+
+        system_status = "HIGH_RAM"
+
+    else:
+
+        system_status = "HEALTHY"
+
+    # Log only when system status changes
+    if system_status != last_system_status:
+
+        if system_status == "HEALTHY":
+
+            logger.info(
+                "System resources returned to normal."
+            )
+
+        else:
+
+            for alert in alerts:
+
+                logger.warning(alert["message"])
+
+        last_system_status = system_status
+
+    # Return monitoring information
     return {
         "status": "success",
+        "system_status": system_status,
         "cpu_usage": cpu_usage,
-        "ram_usage": memory.percent,
-        "total_ram_gb": round(memory.total / (1024 ** 3), 2),
-        "available_ram_gb": round(memory.available / (1024 ** 3), 2)
+        "ram_usage": ram_usage,
+        "total_ram_gb": round(
+            memory.total / (1024 ** 3), 2
+        ),
+        "available_ram_gb": round(
+            memory.available / (1024 ** 3), 2
+        ),
+        "alerts": alerts
     }
