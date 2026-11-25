@@ -1,0 +1,508 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>AI DevOps Monitoring Dashboard</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background: #0f172a;
+            color: white;
+            padding: 30px;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        header h1 {
+            font-size: 28px;
+        }
+
+        .status {
+            color: #4ade80;
+            font-size: 16px;
+        }
+
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: #1e293b;
+            padding: 25px;
+            border-radius: 12px;
+            border: 1px solid #334155;
+        }
+
+        .card h3 {
+            color: #94a3b8;
+            font-size: 15px;
+            margin-bottom: 15px;
+        }
+
+        .card h2 {
+            font-size: 32px;
+        }
+
+        .error { color: #f87171; }
+        .warning { color: #facc15; }
+        .success { color: #4ade80; }
+
+        .panel {
+            background: #1e293b;
+            padding: 25px;
+            border-radius: 12px;
+            border: 1px solid #334155;
+            margin-bottom: 25px;
+        }
+
+        .panel h2 {
+            margin-bottom: 20px;
+        }
+
+        button {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 7px;
+            cursor: pointer;
+            font-size: 15px;
+        }
+
+        button:hover {
+            background: #1d4ed8;
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 13px;
+            margin-bottom: 15px;
+            border-radius: 7px;
+            border: 1px solid #475569;
+            background: #0f172a;
+            color: white;
+            font-size: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 9px;
+            color: #cbd5e1;
+        }
+
+        .log {
+            padding: 15px;
+            border-bottom: 1px solid #334155;
+            overflow-wrap: anywhere;
+            line-height: 1.5;
+        }
+
+        .log.ERROR { color: #f87171; }
+        .log.WARNING { color: #facc15; }
+        .log.INFO { color: #4ade80; }
+
+        pre {
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+            color: #cbd5e1;
+            line-height: 1.7;
+            margin-top: 15px;
+        }
+
+        .message {
+            margin-top: 15px;
+            line-height: 1.5;
+        }
+
+        @media(max-width: 800px) {
+            .cards {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media(max-width: 500px) {
+            body { padding: 15px; }
+
+            .cards {
+                grid-template-columns: 1fr;
+            }
+
+            header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<header>
+    <h1>AI DevOps Monitoring System</h1>
+    <div class="status" id="health">Checking API...</div>
+</header>
+
+
+<!-- Dashboard Statistics -->
+<div class="cards">
+
+    <div class="card">
+        <h3>Total Logs</h3>
+        <h2 id="total">0</h2>
+    </div>
+
+    <div class="card">
+        <h3>Error Logs</h3>
+        <h2 class="error" id="errors">0</h2>
+    </div>
+
+    <div class="card">
+        <h3>Warning Logs</h3>
+        <h2 class="warning" id="warnings">0</h2>
+    </div>
+
+    <div class="card">
+        <h3>Info Logs</h3>
+        <h2 class="success" id="infos">0</h2>
+    </div>
+
+</div>
+
+
+<!-- Generate Log Section -->
+<div class="panel">
+
+    <h2>Generate Application Log</h2>
+
+    <label for="logLevel">Select Log Level</label>
+
+    <select id="logLevel">
+        <option value="ERROR" selected>ERROR</option>
+        <option value="WARNING">WARNING</option>
+        <option value="INFO">INFO</option>
+    </select>
+
+    <label for="logMessage">Log Message</label>
+
+    <input
+        type="text"
+        id="logMessage"
+        value="Database connection failed"
+        placeholder="Enter application log message"
+    >
+
+    <button id="generateButton" onclick="generateLog()">
+        Generate Log
+    </button>
+
+    <div class="message" id="logResult"></div>
+
+</div>
+
+
+<!-- Recent Logs -->
+<div class="panel">
+
+    <h2>Recent Application Logs</h2>
+
+    <button onclick="loadLogs()">Refresh Logs</button>
+
+    <div id="logs" style="margin-top: 20px;">
+        Loading logs...
+    </div>
+
+</div>
+
+
+<!-- AI Error Analysis -->
+<div class="panel">
+
+    <h2>AI Error Analysis</h2>
+
+    <input
+        type="text"
+        id="errorMessage"
+        value="Database connection failed"
+        placeholder="Enter error message"
+    >
+
+    <button id="analyzeButton" onclick="analyzeError()">
+        Analyze Error
+    </button>
+
+    <pre id="analysis">AI analysis will appear here...</pre>
+
+</div>
+
+
+<script>
+
+    // Same-origin API: dashboard and backend use one server
+    const API = window.location.origin;
+
+
+    // Check API health
+    async function checkHealth() {
+
+        const health = document.getElementById("health");
+
+        try {
+            const response = await fetch(`${API}/health`);
+
+            if (!response.ok) {
+                throw new Error("API unavailable");
+            }
+
+            health.textContent = "● API Online";
+            health.style.color = "#4ade80";
+
+        } catch (error) {
+
+            health.textContent = "● API Offline";
+            health.style.color = "#f87171";
+
+        }
+    }
+
+
+    // Generate a new application log
+    async function generateLog() {
+
+        const level = document.getElementById("logLevel").value;
+
+        const message = document.getElementById("logMessage").value.trim();
+
+        const result = document.getElementById("logResult");
+
+        const button = document.getElementById("generateButton");
+
+        if (!message) {
+            result.textContent = "Please enter a log message.";
+            result.style.color = "#f87171";
+            return;
+        }
+
+        button.disabled = true;
+        button.textContent = "Generating...";
+
+        result.textContent = "Saving log...";
+
+        try {
+
+            const response = await fetch(`${API}/logs`, {
+
+                method: "POST",
+
+                headers: {
+                    "Content-Type": "application/json"
+                },
+
+                body: JSON.stringify({
+                    message: message,
+                    level: level
+                })
+
+            });
+
+            const data = await response.json();
+
+            if (!response.ok || data.status !== "success") {
+                throw new Error(data.message || "Failed to generate log");
+            }
+
+            result.textContent = `${level} log generated successfully!`;
+
+            result.style.color = "#4ade80";
+
+            // Update dashboard statistics and logs
+            await loadLogs();
+
+        } catch (error) {
+
+            result.textContent = "Error: " + error.message;
+            result.style.color = "#f87171";
+
+        } finally {
+
+            button.disabled = false;
+            button.textContent = "Generate Log";
+
+        }
+    }
+
+
+    // Load application logs
+    async function loadLogs() {
+
+        const container = document.getElementById("logs");
+
+        try {
+
+            const response = await fetch(`${API}/logs`);
+
+            if (!response.ok) {
+                throw new Error("Could not load logs");
+            }
+
+            const data = await response.json();
+
+            const logs = data.logs || [];
+
+            let errors = 0;
+            let warnings = 0;
+            let infos = 0;
+
+            logs.forEach(log => {
+
+                if (log.includes("ERROR")) {
+                    errors++;
+                }
+                else if (log.includes("WARNING")) {
+                    warnings++;
+                }
+                else if (log.includes("INFO")) {
+                    infos++;
+                }
+
+            });
+
+            document.getElementById("total").textContent = data.total_logs;
+
+            document.getElementById("errors").textContent = errors;
+
+            document.getElementById("warnings").textContent = warnings;
+
+            document.getElementById("infos").textContent = infos;
+
+
+            container.replaceChildren();
+
+            logs.slice().reverse().forEach(log => {
+
+                const item = document.createElement("div");
+
+                item.className = "log";
+
+                if (log.includes("ERROR")) {
+                    item.classList.add("ERROR");
+                }
+                else if (log.includes("WARNING")) {
+                    item.classList.add("WARNING");
+                }
+                else {
+                    item.classList.add("INFO");
+                }
+
+                item.textContent = log.trim();
+
+                container.appendChild(item);
+
+            });
+
+            if (logs.length === 0) {
+                container.textContent = "No logs available.";
+            }
+
+        } catch (error) {
+
+            container.textContent = "Failed to load logs: " + error.message;
+
+        }
+    }
+
+
+    // AI Error Analysis
+    async function analyzeError() {
+
+        const message = document.getElementById("errorMessage").value.trim();
+
+        const output = document.getElementById("analysis");
+
+        const button = document.getElementById("analyzeButton");
+
+        if (!message) {
+            output.textContent = "Please enter an error message.";
+            return;
+        }
+
+        button.disabled = true;
+        button.textContent = "Analyzing...";
+
+        output.textContent = "Analyzing error with AI...";
+
+        try {
+
+            const response = await fetch(`${API}/analyze`, {
+
+                method: "POST",
+
+                headers: {
+                    "Content-Type": "application/json"
+                },
+
+                body: JSON.stringify({
+                    message: message,
+                    level: "ERROR"
+                })
+
+            });
+
+            const data = await response.json();
+
+            if (data.ai_analysis) {
+                output.textContent = data.ai_analysis;
+            }
+            else {
+                output.textContent = data.message || "No analysis available.";
+            }
+
+        } catch (error) {
+
+            output.textContent = "Unable to connect to the API.";
+
+        } finally {
+
+            button.disabled = false;
+            button.textContent = "Analyze Error";
+
+        }
+    }
+
+
+    // Initial dashboard loading
+    checkHealth();
+    loadLogs();
+
+
+    // Automatic refresh every 10 seconds
+    setInterval(checkHealth, 10000);
+    setInterval(loadLogs, 10000);
+
+</script>
+
+</body>
+</html>
